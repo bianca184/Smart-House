@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart House Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            padding: 20px 40px;
+        }
+
+        h1 {
+            font-size: 40px;
+            margin-bottom: 30px;
+        }
+
+        #houses {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* CARDUL = CASA VĂZUTĂ DIN EXTERIOR */
+        .house-card {
+            width: 280px;
+            height: 200px;
+            background-image: url("/images/house-outside.png");
+            background-size: cover;
+            background-position: center;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+
+        .house-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .house-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.1));
+            color: white;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .house-name {
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.9);
+        }
+
+        .house-temp {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 4px;
+            transition: color 0.6s;
+        }
+
+        .house-temp.changed {
+            color: #4cc2ff;
+        }
+
+        .house-icons {
+            display: flex;
+            gap: 8px;
+            font-size: 24px;
+            align-items: center;
+        }
+
+        .icon-lamp-off {
+            filter: grayscale(80%);
+            opacity: 0.6;
+        }
+
+        .icon-lamp-on {
+            filter: drop-shadow(0 0 8px yellow);
+        }
+
+        .icon-boiler-on {
+            filter: drop-shadow(0 0 8px orange);
+        }
+
+        .card-controls {
+            margin-top: 8px;
+        }
+
+        .card-label {
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+
+        .slider {
+            width: 100%;
+        }
+
+        .btn {
+            margin-top: 6px;
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: none;
+            background: #007bff;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #005fcc;
+        }
+
+        /* MODAL – INTERIORUL CASEI */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 750px;
+            height: 420px;
+            background: #111;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+
+        .modal-room {
+            position: absolute;
+            inset: 0;
+            background-image: url("/images/room.png");
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.7);
+        }
+
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .modal-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .modal-title {
+            font-size: 26px;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.8);
+        }
+
+        .modal-close {
+            background: rgba(0,0,0,0.6);
+            border: none;
+            color: white;
+            font-size: 26px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .modal-center {
+            display: flex;
+            height: 260px;
+        }
+
+        .modal-left {
+            flex: 2;
+            position: relative;
+        }
+
+        /* SOFA */
+        .sofa {
+            position: absolute;
+            bottom: 20px;
+            left: 50px;
+            width: 220px;
+            height: 110px;
+            background-image: url("/images/sofa.png");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        /* LAMPĂ / BEC */
+        .lamp {
+            position: absolute;
+            top: 40px;
+            left: 70px;
+            width: 70px;
+            height: 120px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .lamp-on {
+            background-image: url("/images/lamp-on.png");
+            filter: drop-shadow(0 0 18px yellow);
+        }
+
+        .lamp-off {
+            background-image: url("/images/lamp-off.png");
+            filter: grayscale(60%);
+        }
+
+        /* CENTRALĂ */
+        .boiler {
+            position: absolute;
+            bottom: 40px;
+            right: 60px;
+            width: 90px;
+            height: 140px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .boiler-on {
+            background-image: url("/images/boiler-on.png");
+            filter: drop-shadow(0 0 18px orange);
+        }
+
+        .boiler-off {
+            background-image: url("/images/boiler-off.png");
+            filter: grayscale(50%);
+        }
+
+        .flame-emoji {
+            position: absolute;
+            bottom: 28px;
+            right: 100px;
+            font-size: 30px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s, transform 0.4s;
+        }
+
+        .flame-emoji.on {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .modal-right {
+            flex: 1.2;
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            background: linear-gradient(to right, rgba(0,0,0,0.2), rgba(0,0,0,0.7));
+            border-radius: 20px 0 0 20px;
+        }
+
+        .modal-temp {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .modal-target-label {
+            font-size: 14px;
+            margin-top: 10px;
+            margin-bottom: 4px;
+        }
+
+        .modal-bottom {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Smart House Dashboard</h1>
+<div id="houses"></div>
+
+<!-- MODAL INTERIOR CASA -->
+<div id="house-modal" class="modal" onclick="closeModalByBackground(event)">
+    <div class="modal-content">
+        <div class="modal-room"></div>
+        <div class="modal-overlay">
+            <div class="modal-top">
+                <div class="modal-title" id="modal-house-name"></div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+
+            <div class="modal-center">
+                <div class="modal-left">
+                    <div id="modal-lamp" class="lamp lamp-off"></div>
+                    <div class="sofa"></div>
+                    <div id="modal-boiler" class="boiler boiler-off"></div>
+                    <div id="modal-flame" class="flame-emoji">🔥</div>
+                </div>
+                <div class="modal-right">
+                    <div id="modal-temp" class="modal-temp"></div>
+                    <div id="modal-heating-status"></div>
+
+                    <div class="modal-target-label">
+                        Temperatura dorită: <span id="modal-target-value">–</span>°C
+                    </div>
+                    <input id="modal-slider" type="range" min="15" max="30" step="0.1"
+                           class="slider"
+                           onchange="setTargetTemperatureFromModal(this.value)">
+
+                    <button id="modal-light-btn" class="btn" style="margin-top: 15px;"
+                            onclick="toggleLightFromModal()">
+                        Aprinde lumina
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-bottom">
+                <small>Temperatura și centrala se actualizează live din backend.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let housesData = [];
+    let previousTemps = {};
+    let selectedHouseId = null;
+
+    async function loadHouses() {
+        const res = await fetch('/houses');
+        const houses = await res.json();
+        housesData = houses;
+
+        const container = document.getElementById('houses');
+        container.innerHTML = "";
+
+        houses.forEach(h => {
+            const tempChanged = previousTemps[h.id] !== undefined &&
+                previousTemps[h.id] !== h.temperature;
+
+            const card = document.createElement('div');
+            card.className = "house-card";
+            card.onclick = () => openHouse(h.id);
+
+            const lightClass = h.lightOn ? 'icon-lamp-on' : 'icon-lamp-off';
+            const boilerClass = h.heatingOn ? 'icon-boiler-on' : '';
+
+            card.innerHTML = `
+                <div class="house-overlay">
+                    <div class="house-icons">
+                        <span>🏠</span>
+                        <span class="${lightClass}">💡</span>
+                        <span class="${boilerClass}">🔥</span>
+                    </div>
+
+                    <div>
+                        <div class="house-name">${h.name}</div>
+                        <div class="house-temp ${tempChanged ? 'changed' : ''}">
+                            Temperatura: ${h.temperature}°C
+                        </div>
+                    </div>
+
+                    <div class="card-controls">
+                        <div class="card-label">
+                            Temp. dorită: ${h.targetTemperature ?? 0}°C
+                        </div>
+                        <input type="range" min="15" max="30" step="0.1"
+                               value="${h.targetTemperature || 22}"
+                               class="slider"
+                               onclick="event.stopPropagation()"
+                               onchange="setTargetTemperatureFromCard(event, ${h.id}, this.value)">
+                        <button class="btn"
+                                onclick="toggleLightFromCard(event, ${h.id})">
+                            ${h.lightOn ? "Stinge lumina" : "Aprinde lumina"}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+            previousTemps[h.id] = h.temperature;
+        });
+    }
+
+    function findHouseById(id) {
+        return housesData.find(h => h.id === id);
+    }
+
+    function openHouse(id) {
+        selectedHouseId = id;
+        const house = findHouseById(id);
+        if (!house) return;
+
+        const modal = document.getElementById('house-modal');
+        modal.classList.add('show');
+
+        // Nume
+        document.getElementById('modal-house-name').innerText = house.name;
+
+        // Temperatură
+        document.getElementById('modal-temp').innerText =
+            `Temperatura actuală: ${house.temperature}°C`;
+
+        // Target + slider
+        const target = house.targetTemperature || 22;
+        document.getElementById('modal-target-value').innerText = target;
+        const slider = document.getElementById('modal-slider');
+        slider.value = target;
+
+        // Lumină
+        const lamp = document.getElementById('modal-lamp');
+        lamp.className = 'lamp ' + (house.lightOn ? 'lamp-on' : 'lamp-off');
+
+        // Centrală
+        updateBoilerVisual(house);
+
+        // Buton lumină
+        const btn = document.getElementById('modal-light-btn');
+        btn.innerText = house.lightOn ? 'Stinge lumina' : 'Aprinde lumina';
+    }
+
+    function updateBoilerVisual(house) {
+        const boiler = document.getElementById('modal-boiler');
+        const flame = document.getElementById('modal-flame');
+        const status = document.getElementById('modal-heating-status');
+
+        if (!boiler) return; // nu e încă în DOM
+
+        if (house.heatingOn) {
+            boiler.className = 'boiler boiler-on';
+            flame.classList.add('on');
+            status.innerText = "Centrala este PORNITĂ – încălzește casa.";
+        } else {
+            boiler.className = 'boiler boiler-off';
+            flame.classList.remove('on');
+            status.innerText = "Centrala este oprită.";
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('house-modal');
+        modal.classList.remove('show');
+        selectedHouseId = null;
+    }
+
+    function closeModalByBackground(event) {
+        if (event.target.id === 'house-modal') {
+            closeModal();
+        }
+    }
+
+    async function toggleLightFromCard(event, id) {
+        event.stopPropagation();
+        await fetch(`/houses/${id}/toggle-light`, { method: "POST" });
+        await loadHouses();
+        if (selectedHouseId === id) {
+            const updated = findHouseById(id);
+            openHouse(updated.id);
+        }
+    }
+
+    async function toggleLightFromModal() {
+        if (selectedHouseId == null) return;
+        await fetch(`/houses/${selectedHouseId}/toggle-light`, { method: "POST" });
+        await loadHouses();
+        const updated = findHouseById(selectedHouseId);
+        openHouse(updated.id);
+    }
+
+    async function setTargetTemperatureFromCard(event, id, value) {
+        event.stopPropagation();
+        await fetch(`/houses/${id}/set-target-temperature?value=${value}`, { method: "POST" });
+        await loadHouses();
+        if (selectedHouseId === id) {
+            const updated = findHouseById(id);
+            openHouse(updated.id);
+        }
+    }
+
+    async function setTargetTemperatureFromModal(value) {
+        if (selectedHouseId == null) return;
+        await fetch(`/houses/${selectedHouseId}/set-target-temperature?value=${value}`, { method: "POST" });
+        await loadHouses();
+        const updated = findHouseById(selectedHouseId);
+        openHouse(updated.id);
+    }
+
+    loadHouses();
+    setInterval(loadHouses, 1000);
+</script>
+
+</body>
+</html>
