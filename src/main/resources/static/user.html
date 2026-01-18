@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8" />
+    <title>Utilizator – Casa mea</title>
+    <style>
+        body { font-family: Arial, sans-serif; background:#f2f2f2; padding: 20px 40px; }
+        h1 { font-size: 40px; margin-bottom: 20px; }
+
+        #wrap { display:flex; flex-direction:column; gap:20px; max-width: 340px; }
+
+        .house-card {
+            width: 280px; height: 200px;
+            background-image: url("/images/house-outside.png");
+            background-size: cover; background-position: center;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative; overflow: hidden;
+        }
+
+        .house-overlay {
+            position:absolute; inset:0;
+            background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.1));
+            color:#fff; padding:15px;
+            display:flex; flex-direction:column; justify-content:space-between;
+        }
+
+        .house-icons { display:flex; gap:8px; font-size:24px; align-items:center; }
+        .icon-lamp-off { filter: grayscale(80%); opacity: 0.6; }
+        .icon-lamp-on  { filter: drop-shadow(0 0 8px yellow); }
+        .icon-boiler-on{ filter: drop-shadow(0 0 8px orange); }
+
+        .house-name { font-size:22px; font-weight:bold; text-shadow:0 2px 5px rgba(0,0,0,0.9); }
+        .house-temp { font-size:18px; font-weight:bold; margin-top:4px; }
+
+        .card-controls { margin-top: 8px; }
+        .card-label { font-size: 13px; margin-bottom: 3px; }
+        .slider { width: 100%; }
+
+        .btn {
+            margin-top: 6px; padding: 6px 10px;
+            border-radius: 10px; border: none;
+            background: #007bff; color:#fff;
+            font-size: 14px; cursor:pointer;
+        }
+        .btn:hover { background:#005fcc; }
+
+        .error { color:#b00020; white-space:pre-wrap; }
+        small { color:#444; }
+    </style>
+</head>
+<body>
+
+<h1>Casa mea</h1>
+
+<div id="wrap">
+    <div id="card"></div>
+    <div class="error" id="err"></div>
+    <small>Se actualizează live din backend.</small>
+</div>
+
+<script>
+    let auth = sessionStorage.getItem("auth");  // <-- ia din sesiune dacă există
+    let house = null;
+
+    function ensureAuth(){
+        if(auth) return;
+
+        const u = prompt("Nume casă (ex: Iacob / Vancea):");
+        const p = prompt("Parola (default: pass):") || "pass";
+
+        auth = "Basic " + btoa(u + ":" + p);
+        sessionStorage.setItem("auth", auth);     // <-- salvează
+    }
+
+
+    async function fetchAuth(url, options = {}){
+        ensureAuth();
+        options.headers = { ...(options.headers || {}), Authorization: auth };
+
+        const res = await fetch(url, options);
+
+        // dacă ai introdus greșit user/parolă
+        if(res.status === 401 || res.status === 403){
+            sessionStorage.removeItem("auth");
+            auth = null;
+            throw new Error("Login greșit sau nu ai drepturi.");
+        }
+
+        return res;
+    }
+
+    function render(){
+        const cardHost = document.getElementById("card");
+        const err = document.getElementById("err");
+        err.textContent = "";
+
+        if(!house){
+            cardHost.innerHTML = "";
+            return;
+        }
+
+        const lightClass = house.lightOn ? "icon-lamp-on" : "icon-lamp-off";
+        const boilerClass = house.heatingOn ? "icon-boiler-on" : "";
+        const target = (house.targetTemperature ?? 22);
+
+        cardHost.innerHTML = `
+      <div class="house-card">
+        <div class="house-overlay">
+          <div class="house-icons">
+            <span>🏠</span>
+            <span class="${lightClass}">💡</span>
+            <span class="${boilerClass}">🔥</span>
+          </div>
+
+          <div>
+            <div class="house-name">${house.name}</div>
+            <div class="house-temp">Temperatura: ${house.temperature}°C</div>
+          </div>
+
+          <div class="card-controls">
+            <div class="card-label">Temp. dorită: <b>${target}°C</b></div>
+            <input id="slider" type="range" min="15" max="30" step="0.1"
+                   value="${target}"
+                   class="slider"
+                   onchange="setTarget(this.value)">
+            <button class="btn" onclick="toggleLight()">
+              ${house.lightOn ? "Stinge lumina" : "Aprinde lumina"}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    }
+
+    async function loadHouse(){
+        try{
+            const res = await fetchAuth("/me/house");
+            house = await res.json();
+            render();
+        }catch(e){
+            document.getElementById("err").textContent = String(e.message || e);
+        }
+    }
+
+    async function toggleLight(){
+        try{
+            await fetchAuth("/me/house/toggle-light", { method: "POST" });
+            await loadHouse();
+        }catch(e){
+            document.getElementById("err").textContent = String(e.message || e);
+        }
+    }
+
+    async function setTarget(v){
+        try{
+            await fetchAuth("/me/house/set-target-temperature?value=" + encodeURIComponent(v), { method: "POST" });
+            await loadHouse();
+        }catch(e){
+            document.getElementById("err").textContent = String(e.message || e);
+        }
+    }
+
+    loadHouse();
+    setInterval(loadHouse, 1000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8" />
+    <title>Register</title>
+</head>
+<body>
+<h2>Register</h2>
+<input id="name" placeholder="name (nume casă)" />
+<input id="pass" type="password" placeholder="password" />
+<input id="temp" type="number" step="0.1" placeholder="temperature (opțional)" />
+<input id="target" type="number" step="0.1" placeholder="targetTemperature (opțional)" />
+<button onclick="reg()">Register</button>
+<pre id="out"></pre>
+
+<script>
+    async function reg(){
+        const name = document.getElementById("name").value.trim();
+        const password = document.getElementById("pass").value.trim();
+        const t = parseFloat(document.getElementById("temp").value);
+        const tt = parseFloat(document.getElementById("target").value);
+
+        const res = await fetch("/auth/register",{
+            method:"POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({
+                name,
+                password,
+                temperature: Number.isFinite(t) ? t : null,
+                targetTemperature: Number.isFinite(tt) ? tt : null
+            })
+        });
+
+        document.getElementById("out").textContent = await res.text();
+    }
+</script>
+</body>
+</html>

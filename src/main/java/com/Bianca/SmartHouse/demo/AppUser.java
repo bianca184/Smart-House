@@ -1,0 +1,50 @@
+package com.Bianca.SmartHouse.demo;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "users")
+public class AppUser {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    // IMPORTANT: fara cascade/orphanRemoval (altfel iti da detached entity)
+    @OneToOne
+    @JoinColumn(name = "house_id", unique = true)
+    private House house;
+
+    public AppUser() {}
+
+    public AppUser(String username, String password, Role role, House house) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.house = house;
+    }
+
+    public Long getId() { return id; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+
+    public House getHouse() { return house; }
+    public void setHouse(House house) { this.house = house; }
+}

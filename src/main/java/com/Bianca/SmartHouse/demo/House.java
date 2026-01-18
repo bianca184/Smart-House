@@ -9,7 +9,10 @@ public class House {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true, nullable = false)
     private String name;
+
     private boolean lightOn;
     private double temperature;
     private boolean heatingOn;
@@ -23,6 +26,7 @@ public class House {
         this.lightOn = false;
         this.temperature = 22;
         this.heatingOn = false;
+        this.targetTemperature = 22;
     }
 
     public boolean isHeatingOn() {

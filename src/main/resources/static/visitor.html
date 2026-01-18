@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8" />
+    <title>Smart House – Vizitator</title>
+    <style>
+        body{font-family:Arial;padding:30px;background:#f2f2f2}
+        .card{background:#fff;padding:18px;border-radius:14px;max-width:520px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+        button{padding:10px 14px;border:0;border-radius:10px;cursor:pointer}
+        .b1{background:#007bff;color:#fff}
+        .b2{background:#22a06b;color:#fff}
+        input{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;margin:6px 0}
+        .row{display:flex;gap:10px;flex-wrap:wrap}
+        .row>*{flex:1}
+        small{color:#555}
+        #out{white-space:pre-wrap;color:#b00020;margin-top:10px}
+        .ok{color:#0a7a2a}
+    </style>
+</head>
+<body>
+
+<h1>Smart House</h1>
+
+<div class="card">
+    <div class="row">
+        <button class="b1" onclick="login()">Sunt deja utilizator</button>
+        <button class="b2" onclick="toggleRegister()">Devino utilizator</button>
+    </div>
+
+    <div id="reg" style="display:none;margin-top:14px;">
+        <h3>Creează cont + casă</h3>
+
+        <input id="name" placeholder="Nume (ex: Adelin)" />
+        <input id="pass" type="password" placeholder="Parolă" />
+
+        <input id="temp" type="number" step="0.1" placeholder="Temperatura curentă (opțional)" />
+        <input id="target" type="number" step="0.1" placeholder="Temperatura dorită (opțional)" />
+
+        <button class="b2" onclick="register()">Creează</button>
+
+        <div id="out"></div>
+        <small>După creare, intri direct în cont.</small>
+    </div>
+</div>
+
+<script>
+    function setAuth(u, p){
+        sessionStorage.setItem("auth", "Basic " + btoa(u + ":" + p));
+    }
+
+    function login(){
+        const u = (prompt("Username (numele user-ului):") || "").trim();
+        if(!u){ alert("Username gol"); return; }
+        const p = (prompt("Password:") || "").trim();
+        if(!p){ alert("Parolă goală"); return; }
+        setAuth(u,p);
+        location.href = "/user.html";
+    }
+
+    function toggleRegister(){
+        const el = document.getElementById("reg");
+        el.style.display = (el.style.display === "none") ? "block" : "none";
+        document.getElementById("out").textContent = "";
+    }
+
+    async function register(){
+        const out = document.getElementById("out");
+        out.className = "";
+        out.textContent = "";
+
+        const name = document.getElementById("name").value.trim();
+        const password = document.getElementById("pass").value.trim();
+        if(!name){ out.textContent = "name gol"; return; }
+        if(!password){ out.textContent = "password gol"; return; }
+
+        const t = parseFloat(document.getElementById("temp").value);
+        const tt = parseFloat(document.getElementById("target").value);
+
+        const res = await fetch("/auth/register",{
+            method:"POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({
+                name,                 // IMPORTANT: name (nu username)
+                password,
+                temperature: Number.isFinite(t) ? t : null,
+                targetTemperature: Number.isFinite(tt) ? tt : null
+            })
+        });
+
+        const txt = await res.text();
+        if(!res.ok){ out.textContent = txt; return; }
+
+        out.className = "ok";
+        out.textContent = "OK. Intrare în cont...";
+        setAuth(name, password);
+        location.href = "/user.html";
+    }
+</script>
+
+</body>
+</html>
