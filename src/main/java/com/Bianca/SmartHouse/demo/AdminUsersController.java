@@ -25,11 +25,11 @@ public class AdminUsersController {
 
         userRepository.delete(u);
 
-        // 1) dacă user-ul era legat la casă, o ștergi
+
         if (h != null) {
             houseRepository.deleteById(h.getId());
         } else {
-            // 2) fallback: șterge casa după nume (pentru cazuri “orfane”)
+
             houseRepository.findByName(username).ifPresent(houseRepository::delete);
             houseRepository.findByName(username + "'s house").ifPresent(houseRepository::delete);
         }

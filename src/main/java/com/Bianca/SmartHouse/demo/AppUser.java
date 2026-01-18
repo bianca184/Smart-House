@@ -20,7 +20,7 @@ public class AppUser {
     @Column(nullable = false)
     private Role role;
 
-    // IMPORTANT: fara cascade/orphanRemoval (altfel iti da detached entity)
+
     @OneToOne
     @JoinColumn(name = "house_id", unique = true)
     private House house;

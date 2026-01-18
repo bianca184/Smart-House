@@ -21,12 +21,12 @@ public class DemoApplication {
                           PasswordEncoder enc) {
         return args -> {
 
-            // admin
+
             if (!userRepository.existsByUsername("admin")) {
                 userRepository.save(new AppUser("admin", enc.encode("admin"), Role.ADMIN, null));
             }
 
-            // users default (NU se mai dublează)
+
             seedUserWithHouse(userRepository, houseRepository, enc,
                     "Iacob", "pass", "Iacob's house");
 
@@ -42,10 +42,10 @@ public class DemoApplication {
                                    String rawPass,
                                    String houseName) {
 
-        // dacă user-ul există, gata
+
         if (userRepository.existsByUsername(username)) return;
 
-        // casa: o găsești după nume sau o creezi
+
         House h = houseRepository.findByName(houseName)
                 .orElseGet(() -> houseRepository.save(new House(houseName)));
 
